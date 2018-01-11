@@ -2,13 +2,34 @@ package wtf.mephiztopheles.defered;
 
 import java.util.ArrayList;
 import java.util.List;
+import wtf.mephiztopheles.defered.Defered.Promise.State;
 
 public class Defered<RESOLVE, REJECT, PROGRESS> {
 
     private final Promise<RESOLVE, REJECT, PROGRESS> promise;
+    private int successed;
 
     public Defered() {
         promise = new Promise();
+    }
+
+    public static Promise all(Promise... all) {
+
+        Defered defered = new Defered();
+        defered.successed = 0;
+
+        for (Promise promise : all) {
+
+            promise.then((Callback) (Object arg) -> {
+                defered.successed++;
+                if (defered.successed == all.length)
+                    defered.resolve(null);
+            }, (Callback) (Object arg) -> {
+                if (defered.promise.state.equals(State.PENDING))
+                    defered.reject(arg);
+            }, null);
+        }
+        return defered.promise;
     }
 
     public void progress(PROGRESS argument) {

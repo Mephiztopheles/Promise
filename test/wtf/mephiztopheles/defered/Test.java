@@ -14,8 +14,17 @@ public class Test {
         Callback<String> callback = (Callback<String>) (String argument) -> {
             System.out.println(argument);
         };
-        doWork().then(callback, (Callback<Integer>) (Integer argument) -> {
-            System.out.println(argument);
+
+        Promise promise = doWork();
+
+        promise.then(callback, (Callback<Integer>) (Integer argument) -> {
+            System.err.println(argument + " times checked");
+        }, callback);
+
+        Defered.all(promise, promise).then((Callback) (Object argument) -> {
+            System.out.println("All done: " + argument);
+        }, (Callback) (Object argument) -> {
+            System.err.println("oh, got error: " + argument);
         }, callback);
     }
 
@@ -46,6 +55,8 @@ public class Test {
 
                 } catch (InterruptedException ex) {
                     Logger.getLogger(Test.class.getName()).log(Level.SEVERE, null, ex);
+                } finally {
+                    timer.cancel();
                 }
             }
         }, 500);
