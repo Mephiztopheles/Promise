@@ -1,69 +1,67 @@
 package wtf.mephiztopheles.defered;
 
-import java.util.ArrayList;
-import java.util.List;
-import wtf.mephiztopheles.defered.Defered.Promise.State;
+import java.util.*;
 
-public class Defered<RESOLVE, REJECT, PROGRESS> {
+public class Deferred<RESOLVE, REJECT, PROGRESS> {
 
     private final Promise<RESOLVE, REJECT, PROGRESS> promise;
     private int successed;
 
-    public Defered() {
+    public Deferred() {
         promise = new Promise();
     }
 
-    public static Promise all(Promise... all) {
+    public static <RESOLVE,REJECT,PROGRESS> Promise all(Promise<RESOLVE,REJECT,PROGRESS>... all) {
 
-        Defered defered = new Defered();
-        defered.successed = 0;
+        Deferred deferred = new Deferred();
+        deferred.successed = 0;
 
         for (Promise promise : all) {
 
             promise.then((Callback) (Object arg) -> {
-                defered.successed++;
-                if (defered.successed == all.length)
-                    defered.resolve(null);
+                deferred.successed++;
+                if (deferred.successed == all.length)
+                    deferred.resolve(null);
             }, (Callback) (Object arg) -> {
-                if (defered.promise.state.equals(State.PENDING))
-                    defered.reject(arg);
+                if (deferred.promise.state.equals(State.PENDING))
+                    deferred.reject(arg);
             }, null);
         }
-        return defered.promise;
+        return deferred.promise;
     }
 
     public void progress(PROGRESS argument) {
 
-        if (!promise.state.equals(Promise.State.PENDING))
+        if (!promise.state.equals(State.PENDING))
             throw new IllegalStateException(promise.state.message);
 
-        promise.progress.forEach((callback) -> {
+        for (Callback callback : promise.progress) {
             callback.call(argument);
-        });
+        }
     }
 
     public void resolve(RESOLVE argument) {
 
-        if (!promise.state.equals(Promise.State.PENDING))
+        if (!promise.state.equals(State.PENDING))
             throw new IllegalStateException(promise.state.message);
 
-        promise.resolve.forEach((callback) -> {
+        for (Callback callback : promise.resolve) {
             callback.call(argument);
-        });
+        }
 
-        promise.state = Promise.State.RESOLVED;
+        promise.state = State.RESOLVED;
     }
 
     public void reject(REJECT argument) {
 
-        if (!promise.state.equals(Promise.State.PENDING))
+        if (!promise.state.equals(State.PENDING))
             throw new IllegalStateException(promise.state.message);
 
-        promise.reject.forEach((callback) -> {
+        for (Callback callback : promise.reject) {
             callback.call(argument);
-        });
+        }
 
-        promise.state = Promise.State.REJECTED;
+        promise.state = State.REJECTED;
     }
 
     public Promise<RESOLVE, REJECT, PROGRESS> promise() {
@@ -81,8 +79,7 @@ public class Defered<RESOLVE, REJECT, PROGRESS> {
             return state;
         }
 
-        public Promise<RESOLVE, REJECT, PROGRESS> then(Callback resolve, Callback reject, Callback progress) {
-
+        public Promise then(Callback resolve, Callback reject, Callback progress) {
             if (resolve != null)
                 this.resolve.add(resolve);
 
@@ -95,25 +92,12 @@ public class Defered<RESOLVE, REJECT, PROGRESS> {
             return this;
         }
 
-        public Promise<RESOLVE, REJECT, PROGRESS> then(Callback resolve, Callback reject) {
+        public Promise then(Callback resolve, Callback reject) {
             return then(resolve, reject, null);
         }
 
-        public Promise<RESOLVE, REJECT, PROGRESS> then(Callback resolve) {
+        public Promise then(Callback resolve) {
             return then(resolve, null, null);
-        }
-
-        public static enum State {
-
-            PENDING(""),
-            REJECTED("The Promise was already rejected"),
-            RESOLVED("The Promise was already resolved");
-
-            public final String message;
-
-            State(String message) {
-                this.message = message;
-            }
         }
     }
 }

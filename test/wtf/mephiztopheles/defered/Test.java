@@ -5,7 +5,6 @@ import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import wtf.mephiztopheles.defered.Defered.Promise;
 
 public class Test {
 
@@ -21,7 +20,7 @@ public class Test {
             System.err.println(argument + " times checked");
         }, callback);
 
-        Defered.all(promise, promise).then((Callback) (Object argument) -> {
+        Deferred.all(promise, promise).then((Callback) (Object argument) -> {
             System.out.println("All done: " + argument);
         }, (Callback) (Object argument) -> {
             System.err.println("oh, got error: " + argument);
@@ -30,7 +29,7 @@ public class Test {
 
     public static Promise<String, Integer, String> doWork() {
 
-        Defered<String, Integer, String> defer = new Defered();
+        Deferred<String, Integer, String> defer = new Deferred();
 
         Timer timer = new Timer();
 
