@@ -1,5 +1,6 @@
 package wtf.mephiztopheles.defered;
 
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
@@ -10,26 +11,20 @@ public class Test {
 
     public static void main(String[] args) {
 
-        Callback<String> callback = (Callback<String>) (String argument) -> {
-            System.out.println(argument);
-        };
+        Callback<String> callback = System.out::println;
 
-        Promise promise = doWork();
+        Promise<String, Integer, String> promise = doWork();
 
-        promise.then(callback, (Callback<Integer>) (Integer argument) -> {
-            System.err.println(argument + " times checked");
-        }, callback);
+        promise.then(callback, (Integer argument) -> System.err.println(argument + " times checked"), callback);
 
-        Deferred.all(promise, promise).then((Callback) (Object argument) -> {
-            System.out.println("All done: " + argument);
-        }, (Callback) (Object argument) -> {
-            System.err.println("oh, got error: " + argument);
-        }, callback);
+        Promise<List<Object>, Object, Object> all = Deferred.all(promise, promise);
+
+        all.then((List<Object> argument) -> System.out.println("All done: " + argument), (Object argument) -> System.err.println("oh, got error: " + argument));
     }
 
-    public static Promise<String, Integer, String> doWork() {
+    private static Promise<String, Integer, String> doWork() {
 
-        Deferred<String, Integer, String> defer = new Deferred();
+        Deferred<String, Integer, String> defer = new Deferred<>();
 
         Timer timer = new Timer();
 

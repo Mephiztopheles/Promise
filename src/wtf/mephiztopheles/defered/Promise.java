@@ -1,12 +1,38 @@
 package wtf.mephiztopheles.defered;
 
-public interface Promise<RESOLVE, REJECT, PROGRESS> {
 
-    public State state();
+import java.util.ArrayList;
+import java.util.List;
 
-    public Promise then(Callback<RESOLVE> resolve, Callback<REJECT> reject, Callback<PROGRESS> progress);
+public class Promise<RESOLVE, REJECT, PROGRESS> {
 
-    public Promise then(Callback<RESOLVE> resolve, Callback<REJECT> reject);
+    List<Callback<RESOLVE>> resolve = new ArrayList<>();
+    List<Callback<REJECT>> reject = new ArrayList<>();
+    List<Callback<PROGRESS>> progress = new ArrayList<>();
+    State state = State.PENDING;
 
-    public Promise then(Callback<RESOLVE> resolve);
+    public State state() {
+        return state;
+    }
+
+    public Promise then(Callback<RESOLVE> resolve, Callback<REJECT> reject, Callback<PROGRESS> progress) {
+        if (resolve != null)
+            this.resolve.add(resolve);
+
+        if (reject != null)
+            this.reject.add(reject);
+
+        if (progress != null)
+            this.progress.add(progress);
+
+        return this;
+    }
+
+    public Promise then(Callback<RESOLVE> resolve, Callback<REJECT> reject) {
+        return then(resolve, reject, null);
+    }
+
+    public Promise then(Callback<RESOLVE> resolve) {
+        return then(resolve, null, null);
+    }
 }

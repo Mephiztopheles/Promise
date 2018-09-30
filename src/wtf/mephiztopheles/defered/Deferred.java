@@ -5,24 +5,24 @@ import java.util.*;
 public class Deferred<RESOLVE, REJECT, PROGRESS> {
 
     private final Promise<RESOLVE, REJECT, PROGRESS> promise;
-    private int successed;
+    private int succeed;
 
     public Deferred() {
-        promise = new Promise();
+        promise = new Promise<>();
     }
 
-    public static <RESOLVE,REJECT,PROGRESS> Promise all(Promise<RESOLVE,REJECT,PROGRESS>... all) {
+    public static Promise<List<Object>, Object, Object> all(Promise... all) {
 
-        Deferred deferred = new Deferred();
-        deferred.successed = 0;
+        Deferred<List<Object>, Object, Object> deferred = new Deferred<>();
+        deferred.succeed = 0;
 
-        for (Promise promise : all) {
+        for (Promise<?, ?, ?> promise : all) {
 
-            promise.then((Callback) (Object arg) -> {
-                deferred.successed++;
-                if (deferred.successed == all.length)
+            promise.then((arg) -> {
+                deferred.succeed++;
+                if (deferred.succeed == all.length)
                     deferred.resolve(null);
-            }, (Callback) (Object arg) -> {
+            }, (arg) -> {
                 if (deferred.promise.state.equals(State.PENDING))
                     deferred.reject(arg);
             }, null);
@@ -35,7 +35,7 @@ public class Deferred<RESOLVE, REJECT, PROGRESS> {
         if (!promise.state.equals(State.PENDING))
             throw new IllegalStateException(promise.state.message);
 
-        for (Callback callback : promise.progress) {
+        for (Callback<PROGRESS> callback : promise.progress) {
             callback.call(argument);
         }
     }
@@ -45,7 +45,7 @@ public class Deferred<RESOLVE, REJECT, PROGRESS> {
         if (!promise.state.equals(State.PENDING))
             throw new IllegalStateException(promise.state.message);
 
-        for (Callback callback : promise.resolve) {
+        for (Callback<RESOLVE> callback : promise.resolve) {
             callback.call(argument);
         }
 
@@ -57,7 +57,7 @@ public class Deferred<RESOLVE, REJECT, PROGRESS> {
         if (!promise.state.equals(State.PENDING))
             throw new IllegalStateException(promise.state.message);
 
-        for (Callback callback : promise.reject) {
+        for (Callback<REJECT> callback : promise.reject) {
             callback.call(argument);
         }
 
@@ -68,36 +68,4 @@ public class Deferred<RESOLVE, REJECT, PROGRESS> {
         return promise;
     }
 
-    public static class Promise<RESOLVE, REJECT, PROGRESS> {
-
-        private List<Callback<RESOLVE>> resolve = new ArrayList<>();
-        private List<Callback<REJECT>> reject = new ArrayList<>();
-        private List<Callback<PROGRESS>> progress = new ArrayList<>();
-        private State state = State.PENDING;
-
-        public State state() {
-            return state;
-        }
-
-        public Promise then(Callback resolve, Callback reject, Callback progress) {
-            if (resolve != null)
-                this.resolve.add(resolve);
-
-            if (reject != null)
-                this.reject.add(reject);
-
-            if (progress != null)
-                this.progress.add(progress);
-
-            return this;
-        }
-
-        public Promise then(Callback resolve, Callback reject) {
-            return then(resolve, reject, null);
-        }
-
-        public Promise then(Callback resolve) {
-            return then(resolve, null, null);
-        }
-    }
 }
